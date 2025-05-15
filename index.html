@@ -7,71 +7,58 @@
 
   <!-- ----------  CSS  ---------- -->
   <style>
-    /* -------- base layout -------- */
     *,::before,::after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
+
     body{
       display:flex;justify-content:center;align-items:center;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      /* dark radial gradient backdrop */
-      background:#0d1117;
-      background:radial-gradient(circle at top left,#1c2530 0%,#0d1117 55%,#000 100%);
+      background:transparent;           /* page stays see-through   */
       color:#e6edf3;
       line-height:1.5;
-      overflow:hidden;          /* prevent scroll flash on mobile */
+      overflow:hidden;
       padding:1rem;
     }
 
-    /* -------- 3-D card -------- */
+    /* -------- 3-D quote card -------- */
     #card{
       position:relative;
-      width:100%;
-      max-width:680px;
-      background:#21262d;               /* lighter than backdrop */
-      border-radius:18px;
+      width:100%;max-width:680px;
+      background:#21262d;border-radius:18px;
       padding:2.2rem 2.6rem;
       box-shadow:
         0 1px   1px  rgba(255,255,255,.05) inset,
         0 12px 28px rgba(0,0,0,.45),
         0 6px  14px rgba(0,0,0,.35);
-      transform-style:preserve-3d;
-      perspective:1000px;
+      transform-style:preserve-3d;perspective:1000px;
       opacity:0;
       transform:rotateX(18deg) translateY(50px) scale(.94);
       animation:cardEntrance .9s cubic-bezier(.25,.8,.25,1) .15s forwards;
     }
 
-    #text{
-      font-size:clamp(1.25rem,2.5vw + .75rem,1.8rem);
-      letter-spacing:.02em;
-    }
-    #author{
-      margin-top:1.2rem;
-      font-weight:600;
-      color:#58a6ff;
-      font-size:1.05rem;
-    }
-    #stamp{
-      margin-top:.4rem;
-      font-size:.85rem;
-      color:#8b949e;
-    }
-    #attr{
-      margin-top:1.2rem;
-      font-size:.75rem;
-      color:#8b949e;
-    }
+    #text{font-size:clamp(1.25rem,2.5vw + .75rem,1.8rem);letter-spacing:.02em}
+    #author{margin-top:1.2rem;font-weight:600;color:#58a6ff;font-size:1.05rem}
+    #stamp{margin-top:.4rem;font-size:.85rem;color:#8b949e}
+    #attr {margin-top:1.2rem;font-size:.75rem;color:#8b949e}
     #attr a{color:inherit;text-decoration:underline}
 
-    /* -------- entrance motion -------- */
+    /* -------- button style -------- */
+    #newBtn{
+      margin-top:1.8rem;
+      padding:.65rem 1.4rem;
+      border:none;border-radius:12px;
+      background:#58a6ff;color:#0d1117;
+      font-size:1rem;font-weight:600;cursor:pointer;
+      transition:transform .15s ease,box-shadow .15s ease;
+      box-shadow:0 3px 6px rgba(0,0,0,.25);
+    }
+    #newBtn:active{transform:scale(.97) translateY(1px)}
+    #newBtn:disabled{opacity:.6;cursor:progress}
+
     @keyframes cardEntrance{
       to{opacity:1;transform:rotateX(0deg) translateY(0) scale(1);}
     }
-
-    /* small-screen tweaks */
-    @media(max-width:480px){
-      #card{padding:1.8rem 1.4rem}
-    }
+    @media(max-width:480px){#card{padding:1.8rem 1.4rem}}
   </style>
 </head>
 
@@ -80,6 +67,10 @@
     <div id="text">Loading…</div>
     <div id="author"></div>
     <div id="stamp"></div>
+
+    <!-- “Read Another Quote” button -->
+    <button id="newBtn" aria-label="Get another quote">Read Another Quote ☺️</button>
+
     <div id="attr">
       Quotes via <a href="https://api.quotable.io" target="_blank" rel="noopener">Quotable</a>
     </div>
@@ -87,58 +78,72 @@
 
   <!-- ----------  JS  ---------- -->
   <script>
-    /* 1. API + tag filter */
-    const apiURL =
+    const apiURL=
       "https://api.quotable.io/quotes/random?limit=1&tags=money|business|finance|success";
 
-    /* 2. helper to calc delay until 00:01 tomorrow */
-    const msUntilNextRefresh = () => {
-      const now = new Date();
-      const next = new Date(now);
+    /* how long until 00:01 tomorrow */
+    const msUntilNextRefresh=()=>{
+      const now=new Date(),next=new Date(now);
       next.setHours(24,0,60,0);
-      return next - now;
+      return next-now;
     };
 
-    /* 3. fetch with graceful fallback */
+    /* fetch helper with graceful fallback */
     async function getQuote(){
       try{
-        const res = await fetch(apiURL);
-        if(!res.ok) throw new Error("network");
-        const [q] = await res.json();
-        return {q:q.content, a:q.author};
-      }catch(_){
-        return {
+        const res=await fetch(apiURL);
+        if(!res.ok) throw new Error();
+        const [q]=await res.json();
+        return {q:q.content,a:q.author};
+      }catch{
+        return{
           q:"A budget is telling your money where to go instead of wondering where it went.",
           a:"Dave Ramsey (offline fallback)"
         };
       }
     }
 
-    /* 4. show quote & cache per-day */
-    async function render(){
-      const today = new Date().toISOString().slice(0,10);
-      const stored = JSON.parse(localStorage.getItem("finQuote")||"{}");
-
-      let quote = stored;
-      if(stored.date !== today || !stored.q){
-        quote = await getQuote();
-        localStorage.setItem("finQuote", JSON.stringify({...quote, date:today}));
-      }
-
-      document.getElementById("text").textContent = "💡 " + quote.q;
-      document.getElementById("author").textContent = "— " + quote.a;
-      document.getElementById("stamp").textContent =
-        "Shown for " + new Date().toLocaleDateString(undefined,
-          {weekday:"long", year:"numeric", month:"long", day:"numeric"});
-      // restart entrance animation when quote changes
-      const card=document.getElementById("card");
+    /* display quote + replay animation */
+    function showQuote({q,a}){
+      text.textContent="💡 "+q;
+      author.textContent="— "+a;
+      stamp.textContent="Shown for "+
+        new Date().toLocaleDateString(undefined,
+          {weekday:"long",year:"numeric",month:"long",day:"numeric"});
       card.style.animation="none";
       requestAnimationFrame(()=>{card.style.animation="";});
     }
 
-    /* 5. initial + scheduled refresh */
-    render();
-    setTimeout(()=>{render(); setInterval(render,86_400_000);}, msUntilNextRefresh());
+    /* initial daily render (cached) */
+    async function renderDaily(){
+      const today=new Date().toISOString().slice(0,10);
+      const stored=JSON.parse(localStorage.getItem("finQuote")||"{}");
+      let quote=stored;
+      if(stored.date!==today||!stored.q){
+        quote=await getQuote();
+        localStorage.setItem("finQuote",JSON.stringify({...quote,date:today}));
+      }
+      showQuote(quote);
+    }
+
+    /* DOM refs */
+    const card=document.getElementById("card");
+    const text=document.getElementById("text");
+    const author=document.getElementById("author");
+    const stamp=document.getElementById("stamp");
+    const btn=document.getElementById("newBtn");
+
+    /* click for extra quotes (does NOT overwrite daily cache) */
+    btn.addEventListener("click",async()=>{
+      btn.disabled=true;
+      const quote=await getQuote();
+      showQuote(quote);
+      setTimeout(()=>btn.disabled=false,350); // simple debounce
+    });
+
+    /* schedule daily refresh */
+    renderDaily();
+    setTimeout(()=>{renderDaily();setInterval(renderDaily,86_400_000);}, msUntilNextRefresh());
   </script>
 </body>
 </html>
