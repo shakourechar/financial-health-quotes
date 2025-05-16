@@ -1,0 +1,37 @@
+# .github/workflows/update-quotes.yml
+name: Update daily quote
+on:
+  schedule:
+    - cron: '0 0 * * *'          # run every day at 00:00 UTC
+  workflow_dispatch:             # (optional) manual "Run workflow" button
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4     # Pull your repo onto the runner
+
+      - name: Fetch a new finance quote
+        id: get
+        run: |
+          curl -s 'https://api.quotable.io/random?tags=money,business,finance,success' > quote.json
+          cat quote.json              # for the log
+
+      - name: Update quotes.json (replace or append)
+        run: |
+          # ----- Option A: keep only today's quote -----
+          mv quote.json quotes.json
+
+          # ----- Option B: append to an ever-growing list -----
+          # jq '. + [ input ]' quotes.json quote.json > tmp.json && mv tmp.json quotes.json
+          #
+          #  ▸ If you choose append, uncomment the three lines above
+          #    and delete the "Option A" line.
+
+      - name: Commit & push
+        run: |
+          git config user.name  "Quote Bot"
+          git config user.email "bot@noreply.github.com"
+          git add quotes.json
+          git commit -m "Daily quote $(date +%F)" || echo "Nothing to commit"
+          git push
