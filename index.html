@@ -25,13 +25,11 @@
         0  6px 14px rgba(0,0,0,.35);
       transform-style:preserve-3d;perspective:1000px;
       opacity:0;transform:rotateX(18deg) translateY(50px) scale(.94);
-      animation:cardIn .9s cubic-bezier(.25,.8,.25,1) .15s forwards;
+      animation:fadeIn .8s cubic-bezier(.25,.8,.25,1) .15s forwards;
     }
-    #text{font-size:clamp(1.25rem,2.5vw + .75rem,1.8rem);letter-spacing:.02em}
-    #author{margin-top:1.1rem;font-weight:600;color:#58a6ff;font-size:1.05rem}
-    #stamp {margin-top:.35rem;font-size:.85rem;color:#8b949e}
-    #attr  {margin-top:1rem;font-size:.75rem;color:#8b949e}
-    #attr  a{color:inherit;text-decoration:underline}
+    #text  {font-size:clamp(1.25rem,2.5vw + .75rem,1.8rem);letter-spacing:.02em}
+    #author{margin-top:1rem;font-weight:600;color:#58a6ff;font-size:1.05rem}
+    #stamp {margin-top:.4rem;font-size:.85rem;color:#8b949e}
     #newBtn{
       margin-top:1.6rem;padding:.6rem 1.3rem;border:none;border-radius:12px;
       background:#58a6ff;color:#0d1117;font-size:1rem;font-weight:600;cursor:pointer;
@@ -40,7 +38,7 @@
     }
     #newBtn:active  {transform:scale(.97) translateY(1px)}
     #newBtn:disabled{opacity:.6;cursor:progress}
-    @keyframes cardIn{to{opacity:1;transform:rotateX(0) translateY(0) scale(1);}}
+    @keyframes fadeIn{to{opacity:1;transform:rotateX(0) translateY(0) scale(1);}}
   </style>
 </head>
 
@@ -49,73 +47,77 @@
     <div id="text">Loading…</div>
     <div id="author"></div>
     <div id="stamp"></div>
-
-    <!-- Button text now includes the smile emoji -->
     <button id="newBtn">Read Another Quote ☺️</button>
-
-    <div id="attr">
-      Quotes via <a href="https://api.quotable.io" target="_blank" rel="noopener">Quotable</a>
-    </div>
   </div>
 
   <script>
-    /* Simpler endpoint, comma-separated tags */
-    const ENDPOINT =
-      "https://api.quotable.io/random?tags=money,business,finance,success";
+    /* ---------- 1. local fallback list (used only if quotes.json fails) ---------- */
+    const localQuotes = [
+      {q:"Pay yourself first—save 10 % of every paycheck.",                 a:"Common advice"},
+      {q:"High-interest debt kills compounding—pay it fast.",               a:"Unknown"},
+      {q:"Time in the market beats timing the market.",                     a:"Investing maxim"},
+      {q:"Track every dollar; awareness is the first step toward control.", a:"YNAB principle"},
+      {q:"Wealth is what you don’t spend—live below your means.",           a:"Morgan Housel"}
+    ];
 
-    const msUntilTomorrow = () => {
-      const n = new Date(), t = new Date(n);
-      t.setHours(24,0,60,0);          // 00:01 tomorrow
-      return t - n;
-    };
-
-    async function fetchQuote(){
-      try{
-        const r = await fetch(ENDPOINT,{cache:"no-store"});
-        if(!r.ok) throw 0;
-        const q = await r.json();
-        return {q:q.content,a:q.author};
-      }catch{
-        return {
-          q:"A budget is telling your money where to go instead of wondering where it went.",
-          a:"Dave Ramsey (offline fallback)"
-        };
+    /* ---------- 2. load quotes.json once ---------- */
+    let quoteListPromise = null;
+    function loadQuoteList() {
+      if (!quoteListPromise) {
+        quoteListPromise = fetch("./quotes.json", {cache:"no-store"})
+          .then(r => r.ok ? r.json() : [])
+          .catch(() => []);                       // empty list on error
       }
+      return quoteListPromise;
     }
 
-    function display({q,a}){
-      text.textContent = "💡 " + q;
+    /* ---------- 3. pick a random quote ---------- */
+    async function fetchQuote() {
+      const list = await loadQuoteList();
+      const pool = Array.isArray(list) && list.length ? list : localQuotes;
+      let pick;
+      do pick = pool[Math.floor(Math.random()*pool.length)];
+      while (pick.q === current?.q);              // avoid immediate repeat
+      return pick;
+    }
+
+    /* ---------- 4. helpers ---------- */
+    const $ = id => document.getElementById(id);
+    const card = $("card"), text=$("text"), author=$("author"), stamp=$("stamp"), btn=$("newBtn");
+    function show({q,a}) {
+      text.textContent   = "💡 " + q;
       author.textContent = "— " + a;
-      stamp.textContent = "Shown for " +
+      stamp.textContent  = "Shown for " +
         new Date().toLocaleDateString(undefined,
           {weekday:"long",year:"numeric",month:"long",day:"numeric"});
       card.style.animation="none";requestAnimationFrame(()=>card.style.animation="");
     }
+    const msUntilTomorrow = () => {
+      const n=new Date(),t=new Date(n); t.setHours(24,0,60,0); return t-n;
+    };
 
-    async function renderDaily(){
+    /* ---------- 5. daily quote logic ---------- */
+    async function renderDaily() {
       const today = new Date().toISOString().slice(0,10);
-      const cache = JSON.parse(localStorage.getItem("finQuote")||"{}");
-      let quote = cache;
-      if(cache.date!==today || !cache.q){
-        quote = await fetchQuote();
-        localStorage.setItem("finQuote",JSON.stringify({...quote,date:today}));
+      const cached = JSON.parse(localStorage.getItem("finQuote")||"{}");
+      current = cached;                           // current defined below
+      if (cached.date !== today || !cached.q) {
+        current = await fetchQuote();
+        localStorage.setItem("finQuote", JSON.stringify({...current,date:today}));
       }
-      display(quote);
+      show(current);
     }
 
-    /* refs */
-    const card = document.getElementById("card"),
-          text = document.getElementById("text"),
-          author = document.getElementById("author"),
-          stamp = document.getElementById("stamp"),
-          btn = document.getElementById("newBtn");
-
-    btn.addEventListener("click", async ()=>{
+    /* ---------- 6. events ---------- */
+    let current = null;
+    btn.addEventListener("click", async () => {
       btn.disabled = true;
-      display(await fetchQuote());
-      setTimeout(()=>btn.disabled=false,350);
+      current = await fetchQuote();
+      show(current);
+      setTimeout(()=>btn.disabled=false,300);
     });
 
+    /* ---------- 7. init + schedule ---------- */
     renderDaily();
     setTimeout(()=>{renderDaily();setInterval(renderDaily,86_400_000);}, msUntilTomorrow());
   </script>
