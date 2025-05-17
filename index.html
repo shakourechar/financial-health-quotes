@@ -5,6 +5,7 @@
   <title>Daily Financial-Wellness Quote</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
+  <!-- —————  STYLE  ————— -->
   <style>
     *,::before,::after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
@@ -50,33 +51,85 @@
     <button id="newBtn">Read Another Quote ☺️</button>
   </div>
 
+  <!-- —————  SCRIPT  ————— -->
   <script>
-    /* ---------- 1. local emergency list (used if quotes.json missing) ---------- */
+    /* 1 ────────────────────────────────────────────
+       Embedded master list of 50 quotes
+    ───────────────────────────────────────────────*/
     const localQuotes = [
-      {q:"Pay yourself first—save 10 % of every paycheck.",                 a:"Common advice"},
-      {q:"High-interest debt kills compounding—pay it fast.",               a:"Unknown"},
-      {q:"Time in the market beats timing the market.",                     a:"Investing maxim"},
-      {q:"Track every dollar; awareness is the first step toward control.", a:"YNAB principle"},
-      {q:"Wealth is what you don’t spend—live below your means.",           a:"Morgan Housel"}
+      { q:"A budget is telling your money where to go instead of wondering where it went.",                                     a:"John Maxwell" },
+      { q:"Do not save what is left after spending; instead spend what is left after saving.",                                  a:"Warren Buffett" },
+      { q:"Never spend your money before you have earned it.",                                                                  a:"Thomas Jefferson" },
+      { q:"If you would be wealthy, think of saving as well as getting.",                                                       a:"Benjamin Franklin" },
+      { q:"You must gain control over your money or the lack of it will forever control you.",                                  a:"Dave Ramsey" },
+      { q:"Financial peace isn't the acquisition of stuff; it's learning to live on less than you make, so you can give money back and have money to invest.", a:"Dave Ramsey" },
+      { q:"The habit of saving is itself an education; it fosters every virtue.",                                               a:"T.T. Munger" },
+      { q:"An investment in knowledge pays the best interest.",                                                                 a:"Benjamin Franklin" },
+      { q:"Beware of little expenses; a small leak will sink a great ship.",                                                    a:"Benjamin Franklin" },
+      { q:"Spend less than you earn.",                                                                                          a:"Financial Principle" },
+      { q:"Budgeting to zero means that when you create your budget, your income minus your expenses add up to zero.",          a:"Valley First" },
+      { q:"Track your income and expenses to identify where your money goes each month.",                                       a:"RaeLipskie Partnership" },
+      { q:"Set realistic financial goals, both short-term and long-term.",                                                      a:"Bank of America" },
+      { q:"Establish an emergency fund to cover unexpected financial setbacks.",                                                a:"NerdWallet" },
+      { q:"Automate your savings to ensure you consistently set money aside.",                                                  a:"Bankrate" },
+      { q:"Pay off high-interest debts first to save money on interest payments.",                                              a:"General Advice" },
+      { q:"Continuously educate yourself about personal finance and investment options.",                                       a:"Quicken" },
+      { q:"Understand the risk associated with any investment before putting your money into it.",                              a:"Quicken" },
+      { q:"Diversify your investments to reduce risk.",                                                                         a:"Quicken" },
+      { q:"Maximize your employment benefits, such as 401(k) matching.",                                                        a:"Quicken" },
+      { q:"Plan for unexpected expenses, as they happen to everyone.",                                                          a:"Quicken" },
+      { q:"The goal isn't more money; the goal is living life on your terms.",                                                  a:"Will Rogers" },
+      { q:"If you're not staying on top of your money, you're putting your financial well-being at risk.",                      a:"Suze Orman" },
+      { q:"Financial freedom is available to those who learn about it and work for it.",                                        a:"Robert Kiyosaki" },
+      { q:"Wealth is the ability to fully experience life.",                                                                    a:"Henry David Thoreau" },
+      { q:"Money is a terrible master but an excellent servant.",                                                               a:"P.T. Barnum" },
+      { q:"A budget is more than just a series of numbers on a page; it is an embodiment of our values.",                       a:"Barack Obama" },
+      { q:"There is no dignity quite so impressive, and no independence quite so important, as living within your means.",      a:"Calvin Coolidge" },
+      { q:"Every time you borrow money, you're robbing your future self.",                                                      a:"Nathan W. Morris" },
+      { q:"Don't tell me what you value, show me your budget, and I'll tell you what you value.",                               a:"Joe Biden" },
+      { q:"It's not how much money you make, but how much money you keep, how hard it works for you, and how many generations you keep it for.", a:"Robert Kiyosaki" },
+      { q:"Rule No. 1 is never lose money. Rule No. 2 is never forget Rule No. 1.",                                              a:"Warren Buffett" },
+      { q:"Being rich is having money; being wealthy is having time.",                                                          a:"Margaret Bonanno" },
+      { q:"The more you learn, the more you earn.",                                                                            a:"Warren Buffett" },
+      { q:"Wealth consists not in having great possessions, but in having few wants.",                                          a:"Epictetus" },
+      { q:"Calculate your net income to understand what you truly have available to spend or save.",                           a:"Bank of America" },
+      { q:"Review your budget regularly and adjust it as your circumstances change.",                                           a:"Budgeting Principle" },
+      { q:"Try a 'no-spend challenge' to reset your spending habits and identify non-essentials.",                              a:"Valley First" },
+      { q:"Plan your meals and make a grocery list to avoid overspending and food waste.",                                      a:"Valley First" },
+      { q:"Sleep on big purchases to avoid impulse buying.",                                                                    a:"Valley First" },
+      { q:"Keep your credit utilization ratio below 30% to maintain a good credit score.",                                      a:"Goalry" },
+      { q:"Used correctly, a budget doesn't restrict you; it empowers you.",                                                   a:"Tere Stouffer" },
+      { q:"You can afford anything, but not everything.",                                                                       a:"Paula Pant" },
+      { q:"If you buy things you do not need, soon you will have to sell things you need.",                                     a:"Warren Buffett" },
+      { q:"Start investing as soon as possible to take advantage of compounding.",                                              a:"Bankrate" },
+      { q:"A penny saved is a penny earned.",                                                                                   a:"Benjamin Franklin" },
+      { q:"The bitterness of poor quality remains long after the sweetness of low price is forgotten.",                         a:"Benjamin Franklin" },
+      { q:"Winning at money is 80 percent behavior and 20 percent head knowledge.",                                             a:"Dave Ramsey" },
+      { q:"Financial knowledge is financial power.",                                                                           a:"Financial Saying" },
+      { q:"If we command our wealth, we shall be rich and free; if our wealth commands us, we are poor indeed.",                a:"Edmund Burke" }
     ];
 
-    /* ---------- 2. load quotes.json once per session ---------- */
+    /* 2 ────────────────────────────────────────────
+       Attempt to load quotes.json (ever-growing list)
+    ───────────────────────────────────────────────*/
     let quoteListPromise = null;
     function loadQuoteList() {
       if (!quoteListPromise) {
-        quoteListPromise = fetch("./quotes.json", { cache: "no-store" })
+        quoteListPromise = fetch("./quotes.json", { cache:"no-store" })
           .then(r => r.ok ? r.json() : [])
           .catch(() => []);
       }
       return quoteListPromise;
     }
 
-    /* ---------- 3. pick a random quote (never repeat immediately) ---------- */
+    /* 3 ────────────────────────────────────────────
+       Get a random quote (avoid immediate repeat)
+    ───────────────────────────────────────────────*/
     async function fetchQuote() {
       const list = await loadQuoteList();
-      const pool = Array.isArray(list) && list.length ? list : localQuotes;
+      const pool = (Array.isArray(list) && list.length) ? list : localQuotes;
 
-      if (pool.length === 1) return pool[0];        // only one available—just return it
+      if (pool.length === 1) return pool[0];       // safeguard
 
       let pick;
       do pick = pool[Math.floor(Math.random() * pool.length)];
@@ -84,28 +137,33 @@
       return pick;
     }
 
-    /* ---------- 4. helpers ---------- */
-    const $ = id => document.getElementById(id);
-    const card = $("card"), text=$("text"), author=$("author"),
-          stamp=$("stamp"), btn=$("newBtn");
+    /* 4 ────────────────────────────────────────────
+       DOM helpers & render
+    ───────────────────────────────────────────────*/
+    const $      = id => document.getElementById(id);
+    const card   = $("card"),
+          text   = $("text"),
+          author = $("author"),
+          stamp  = $("stamp"),
+          btn    = $("newBtn");
 
     function show({q,a}) {
       text.textContent   = "💡 " + q;
       author.textContent = "— " + a;
-      stamp.textContent  = "Shown for " +
-        new Date().toLocaleDateString(undefined,
+      stamp.textContent  =
+        "Shown for " + new Date().toLocaleDateString(undefined,
           {weekday:"long",year:"numeric",month:"long",day:"numeric"});
       card.style.animation="none";
       requestAnimationFrame(()=>card.style.animation="");
     }
 
     const msUntilTomorrow = () => {
-      const n = new Date(), t = new Date(n);
-      t.setHours(24,0,60,0);            // 00:01 tomorrow
-      return t - n;
+      const n=new Date(),t=new Date(n); t.setHours(24,0,60,0); return t-n;
     };
 
-    /* ---------- 5. daily quote logic ---------- */
+    /* 5 ────────────────────────────────────────────
+       Daily quote logic
+    ───────────────────────────────────────────────*/
     async function renderDaily() {
       const today  = new Date().toISOString().slice(0,10);
       const cached = JSON.parse(localStorage.getItem("finQuote")||"{}");
@@ -118,7 +176,9 @@
       show(current);
     }
 
-    /* ---------- 6. events ---------- */
+    /* 6 ────────────────────────────────────────────
+       Events
+    ───────────────────────────────────────────────*/
     let current = null;
     btn.addEventListener("click", async () => {
       btn.disabled = true;
@@ -127,7 +187,9 @@
       setTimeout(()=>btn.disabled=false,300);
     });
 
-    /* ---------- 7. init + schedule ---------- */
+    /* 7 ────────────────────────────────────────────
+       Init & schedule
+    ───────────────────────────────────────────────*/
     renderDaily();
     setTimeout(()=>{renderDaily(); setInterval(renderDaily,86_400_000);},
                msUntilTomorrow());
