@@ -51,7 +51,7 @@
   </div>
 
   <script>
-    /* ---------- 1. local fallback list (used only if quotes.json fails) ---------- */
+    /* ---------- 1. local emergency list (used if quotes.json missing) ---------- */
     const localQuotes = [
       {q:"Pay yourself first—save 10 % of every paycheck.",                 a:"Common advice"},
       {q:"High-interest debt kills compounding—pay it fast.",               a:"Unknown"},
@@ -60,47 +60,57 @@
       {q:"Wealth is what you don’t spend—live below your means.",           a:"Morgan Housel"}
     ];
 
-    /* ---------- 2. load quotes.json once ---------- */
+    /* ---------- 2. load quotes.json once per session ---------- */
     let quoteListPromise = null;
     function loadQuoteList() {
       if (!quoteListPromise) {
-        quoteListPromise = fetch("./quotes.json", {cache:"no-store"})
+        quoteListPromise = fetch("./quotes.json", { cache: "no-store" })
           .then(r => r.ok ? r.json() : [])
-          .catch(() => []);                       // empty list on error
+          .catch(() => []);
       }
       return quoteListPromise;
     }
 
-    /* ---------- 3. pick a random quote ---------- */
+    /* ---------- 3. pick a random quote (never repeat immediately) ---------- */
     async function fetchQuote() {
       const list = await loadQuoteList();
       const pool = Array.isArray(list) && list.length ? list : localQuotes;
+
+      if (pool.length === 1) return pool[0];        // only one available—just return it
+
       let pick;
-      do pick = pool[Math.floor(Math.random()*pool.length)];
-      while (pick.q === current?.q);              // avoid immediate repeat
+      do pick = pool[Math.floor(Math.random() * pool.length)];
+      while (pick.q === current?.q);
       return pick;
     }
 
     /* ---------- 4. helpers ---------- */
     const $ = id => document.getElementById(id);
-    const card = $("card"), text=$("text"), author=$("author"), stamp=$("stamp"), btn=$("newBtn");
+    const card = $("card"), text=$("text"), author=$("author"),
+          stamp=$("stamp"), btn=$("newBtn");
+
     function show({q,a}) {
       text.textContent   = "💡 " + q;
       author.textContent = "— " + a;
       stamp.textContent  = "Shown for " +
         new Date().toLocaleDateString(undefined,
           {weekday:"long",year:"numeric",month:"long",day:"numeric"});
-      card.style.animation="none";requestAnimationFrame(()=>card.style.animation="");
+      card.style.animation="none";
+      requestAnimationFrame(()=>card.style.animation="");
     }
+
     const msUntilTomorrow = () => {
-      const n=new Date(),t=new Date(n); t.setHours(24,0,60,0); return t-n;
+      const n = new Date(), t = new Date(n);
+      t.setHours(24,0,60,0);            // 00:01 tomorrow
+      return t - n;
     };
 
     /* ---------- 5. daily quote logic ---------- */
     async function renderDaily() {
-      const today = new Date().toISOString().slice(0,10);
+      const today  = new Date().toISOString().slice(0,10);
       const cached = JSON.parse(localStorage.getItem("finQuote")||"{}");
-      current = cached;                           // current defined below
+      current = cached;
+
       if (cached.date !== today || !cached.q) {
         current = await fetchQuote();
         localStorage.setItem("finQuote", JSON.stringify({...current,date:today}));
@@ -119,7 +129,8 @@
 
     /* ---------- 7. init + schedule ---------- */
     renderDaily();
-    setTimeout(()=>{renderDaily();setInterval(renderDaily,86_400_000);}, msUntilTomorrow());
+    setTimeout(()=>{renderDaily(); setInterval(renderDaily,86_400_000);},
+               msUntilTomorrow());
   </script>
 </body>
 </html>
