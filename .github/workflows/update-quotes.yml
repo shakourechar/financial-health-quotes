@@ -1,34 +1,34 @@
 name: Update daily quote
+
 on:
   schedule:
     - cron: '0 0 * * *'          # run every day at 00:00 UTC
-  workflow_dispatch:             # (optional) manual "Run workflow" button
+  workflow_dispatch:             # manual "Run workflow" button
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4     # Pull your repo onto the runner
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Update CA certificates
+      - name: Ensure CA certificates are installed
         run: sudo apt-get update && sudo apt-get install -y ca-certificates
 
       - name: Fetch a new finance quote
         id: get
         run: |
-          curl -k -s 'https://api.quotable.io/random?tags=money,business,finance,success' > quote.json
-          cat quote.json              # for the log
+          curl -s 'https://api.quotable.io/random?tags=money,business,finance,success' > quote.json
+          cat quote.json
 
       - name: Update quotes.json (replace or append)
         run: |
-          # ----- Option A: keep only today's quote -----
+          # Option A: keep only today's quote
           mv quote.json quotes.json
 
-          # ----- Option B: append to an ever-growing list -----
+          # Option B: append to an ever-growing list
           # jq '. + [ input ]' quotes.json quote.json > tmp.json && mv tmp.json quotes.json
-          #
-          #  ▸ If you choose append, uncomment the three lines above
-          #    and delete the "Option A" line.
+          # If you choose append, uncomment the three lines above and delete the "Option A" line.
 
       - name: Commit & push
         run: |
