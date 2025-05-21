@@ -1,4 +1,3 @@
-# .github/workflows/update-quotes.yml
 name: Update daily quote
 on:
   schedule:
@@ -11,10 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4     # Pull your repo onto the runner
 
+      - name: Update CA certificates
+        run: sudo apt-get update && sudo apt-get install -y ca-certificates
+
       - name: Fetch a new finance quote
         id: get
         run: |
-          curl -s 'https://api.quotable.io/random?tags=money,business,finance,success' > quote.json
+          curl -k -s 'https://api.quotable.io/random?tags=money,business,finance,success' > quote.json
           cat quote.json              # for the log
 
       - name: Update quotes.json (replace or append)
