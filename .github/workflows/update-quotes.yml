@@ -18,8 +18,7 @@ jobs:
       - name: Fetch a new finance quote
         id: get
         run: |
-          curl -s 'https://api.quotable.io/random?tags=money,business,finance,success' > quote.json
-          cat quote.json
+          curl -k -s 'https://api.quotable.io/random?tags=money,business,finance,success' > quote.json
 
       - name: Update quotes.json (replace or append)
         run: |
